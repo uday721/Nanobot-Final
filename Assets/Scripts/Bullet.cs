@@ -10,5 +10,10 @@ public class Bullet : MonoBehaviour {
     {
         transform.Translate(Vector3.right * Time.deltaTime * bulletMoveSpeed);
         Destroy(gameObject, 2);
+
+        if (Time.deltaTime > 2)
+        {
+            Destroy(gameObject);
+        }
     }
 }

@@ -2,91 +2,78 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class GameManager : MonoBehaviour {
+public class GameManager : MonoBehaviour
+{
 
     public int numberOfEnemies;
-    public string[] EnemyType = new string[] { "goodBacteria", "badBacteria", "virus" , "rbc" , "wbc", "nanobot" };
+    public string[] EnemyType = new string[] { "goodBacteria", "badBacteria", "virus", "rbc", "wbc", "nanobot" };
     public static GameObject[] AllGameobjects;
     public GameObject characterGameObject;
 
+    public GameObject initializergameObj;
 
-    public static GameObject[] enemyType1;
-    public static GameObject[] enemyType2;
-    public static GameObject[] enemyType3;
-    public static GameObject[] enemyType4;
-    public static GameObject[] enemyType5;
-    public static GameObject[] enemyType6;
+    public static List<GameObject> enemyType0 = new List<GameObject>();
+    public static List<GameObject> enemyType1 = new List<GameObject>();
+    public static List<GameObject> enemyType2 = new List<GameObject>();
+    public static List<GameObject> enemyType3 = new List<GameObject>();
+    public static List<GameObject> enemyType4 = new List<GameObject>();
+    public static List<GameObject> enemyType5 = new List<GameObject>();
+    public static List<GameObject> enemyType6 = new List<GameObject>();
+
+    public static List<List<GameObject>> listOfenemies = new List< List< GameObject > > ();
 
     public static Dictionary<string, int> Health = new Dictionary<string, int>();
+    public static Dictionary<string, string> ZoneTracker = new Dictionary<string, string>();
 
     List<GameObject> spawnNPC = new List<GameObject>();
 
     private bool[,] enemyMatrix = new bool[6, 6];
 
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
+        enemyType0.Add(initializergameObj);
+        InitializeListofEnemyList();
+
         CreateEnemies();
-        //InitializeEnemyMatrix();
         PrepareAllEnemies();
 
     }
 
     void PrepareAllEnemies()
     {
-         enemyType1 = GameObject.FindGameObjectsWithTag("goodBacteria");
-         enemyType2 = GameObject.FindGameObjectsWithTag("badBacteria");
-         enemyType3 = GameObject.FindGameObjectsWithTag("virus");
-         enemyType4 = GameObject.FindGameObjectsWithTag("rbc");
-         enemyType5 = GameObject.FindGameObjectsWithTag("wbc");
-         enemyType6 = GameObject.FindGameObjectsWithTag("nanobot");
+
     }
 
-
-    //void InitializeEnemyMatrix()
-    //{
-    //    for (int i = 0; i < 5; i++)
-    //    {
-    //        for (int j = 0; j < 5; j++)
-    //        {
-    //            enemyMatrix[i, j] = false;
-    //        }
-    //    }
-
-
-    //    //enemies for good bacteria
-    //    enemyMatrix[0, 2] = true;
-
-    //    //enemies for bad bacteria
-    //    enemyMatrix[1, 1] = true;
-
-    //    //enemies forvirus
-    //    enemyMatrix[2, 4] = true;
-
-    //    //enemies for rbc
-    //    enemyMatrix[3, 2] = true;
-
-    //    //enemies forwbc
-    //    enemyMatrix[4, 5] = true;
-
-    //    //enemies fornanobot
-    //    enemyMatrix[5, 2] = true;
-    //}
+    void InitializeListofEnemyList()
+    {
+        listOfenemies.Add(enemyType0);
+        listOfenemies.Add(enemyType1);
+        listOfenemies.Add(enemyType2);
+        listOfenemies.Add(enemyType3);
+        listOfenemies.Add(enemyType4);
+        listOfenemies.Add(enemyType5);
+        listOfenemies.Add(enemyType6);
+    }
 
 
     void CreateEnemies()
     {
         for (int i = 0; i < numberOfEnemies; i++)
-        { int enemytype= Random.Range(0,4);
+        {
+            int enemytype = Random.Range(1, 6);
             bool[] enemylist = GetEnemyList(enemytype);
 
-            //Add new gameobject to list
-            spawnNPC.Add(CreateEnemy(EnemyType[enemytype]));
+            listOfenemies[enemytype].Add(CreateEnemy(EnemyType[enemytype]));
+
         }
     }
 
     GameObject CreateEnemy(string enemyName)
     {
-        characterGameObject = (GameObject)Instantiate(Resources.Load(enemyName));
+        float x = Random.Range(-60, 60);
+        float z = Random.Range(-60, 60);
+        characterGameObject = (GameObject)Instantiate(Resources.Load(enemyName),new Vector3(x,0,z),new Quaternion(0.0f,0.0f,0.0f,0.0f));
         Health.Add(enemyName, 100);
         return characterGameObject;
     }
@@ -95,14 +82,15 @@ public class GameManager : MonoBehaviour {
     {
         bool[] matrixRow = new bool[5];
         for (int i = 0; i < 5; i++)
-            matrixRow[i] = enemyMatrix[charactertype,i];
+            matrixRow[i] = enemyMatrix[charactertype, i];
 
         return matrixRow;
     }
 
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
 
 }

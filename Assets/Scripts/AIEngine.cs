@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-public class AIEngine : MonoBehaviour {
+public class AIEngine : MonoBehaviour
+{
 
 
     public bool EnemygoodBacteria;
@@ -19,66 +20,69 @@ public class AIEngine : MonoBehaviour {
     public float movespeed = 10.0f;
     public float rotationspeed = 10.0f;
 
+    //public Transform target;
+    NavMeshAgent agent;
+
+    float randomizeinterval = 3.0f;
+
 
     public string[] EnemyType = new string[] { "goodBacteria", "badBacteria", "virus", "rbc", "wbc", "nanobot" };
-    //public int Health = 100;
     public bool IsAI = false;
     int TresholdHealth = 50;
 
-    //public bool goodBacteria = false, badBacteria = false, virus = false, rbc = false, wbc = false, nanobot = false;
+    private List<string> BulletObjects;
+    public GameObject genericobjectInitializer;
+    public static GameObject[] enemyType0;
+    private float updategameobjTimer = 0;
 
-    //for random movements
-    float wall_left = -5.0f;
-    float wall_right = 5.0f;
-    float wall_top = -5.0f;
-    float wall_bottom = 5.0f;
-    Vector3 AI_Position;
-    float MoveSpeed = 0.05f;
-    //Get two Random values within a Range (Screen dimensions)
-    float randomX;
-    float randomY;
-    float randomZ;
-
-    private GameObject[] genericObjects;
-    private static int[] stateMachine = { 0,1,2};
+    private static int[] stateMachine = { 0, 1, 2 };
     private int currentState = stateMachine[0];
     Dictionary<string, int> health = GameManager.Health;
+    public static Dictionary<string, string> ZoneTracker = GameManager.ZoneTracker;
 
-    void Start () {
-       
-        randomX = Random.Range(0, 10);
-         randomY = Random.Range(0, 10);
-        randomZ = Random.Range(0, 10);
+    bool isInteracting = false;
+    int waypointchild = 0;
+    List<GameObject> enemylist = new List<GameObject>();
+    public int healthreducestep = 10;
 
-        randomX = randomX + this.transform.position.x;
-        randomY = randomY + this.transform.position.y;
-        randomZ = randomZ + this.transform.position.z;
+    //to learn if it is a safe area
+    public float healthcheckinterval = 3;
+
+
+
+    void Start()
+    {
+        updategameobjTimer = 20;
+        //EnemyArrayInitializer();
+        agent = GetComponent<NavMeshAgent>();
 
     }
 
 
 
     // Update is called once per frame
-    void Update () {
-        //  InteraxtWithNPC();
-        AI_Position = this.transform.position;
-        RandomMovements();
-        #region commentedcode
-        // transform.Translate(Vector3.forward * speed * Time.deltaTime);
-        //GameObject closest = FindClosestNPC();
-        //Debug.Log(closest.name);
+    void Update()
+    {
+        updategameobjTimer -= Time.deltaTime;
+        if (updategameobjTimer < 0)
+        {
+            EnemyArrayInitializer();
+            isInteracting = false;
+            updategameobjTimer = 20;
+        }
 
-        // transform.Translate(Vector3.forward * speed * Time.deltaTime);
-        //float step = speed * Time.deltaTime;
-        //transform.position = Vector3.MoveTowards(transform.position, closest.transform.position, step);
+        if (updategameobjTimer > 10 && !isInteracting)
+        {
+            RandomMovements();
+        }
+
+        if (updategameobjTimer < 10 && !isInteracting)
+        {
+            InteraxtWithNPC();
+        }
 
 
 
-        //transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(closest.transform.position - transform.position), rotationspeed * Time.deltaTime);
-        ////move towards the player
-        //transform.position += transform.forward * Time.deltaTime * movespeed;
-
-        #endregion
     }
 
     void FixedUpdate()
@@ -89,65 +93,84 @@ public class AIEngine : MonoBehaviour {
 
     void RandomMovements()
     {
-        Vector3 randomXYZ = new Vector3(randomX, 0,randomZ);
-        Vector3 Direction = randomXYZ - AI_Position;
+        GameObject waypoints = GameObject.Find("RandomizeMovements"); ;// GameObject.FindGameObjectWithTag("RandomizeMovements");
 
-        //Normalize the Direction to apply appropriatly
-        Direction = Direction.normalized;
-
-        if ( AI_Position.x > wall_left && AI_Position.x < wall_right
-         &&
-         AI_Position.z < wall_bottom && AI_Position.z > wall_top)
+        randomizeinterval -= Time.deltaTime;
+        if (randomizeinterval < 0)
         {
-            //Make AI move in the Direction (adjust speed to your needs)
-            transform.position += randomXYZ * MoveSpeed;
+            //change direction, reset timer
+            waypointchild = Random.Range(0, 12);
+            randomizeinterval = 3.0f;
         }
-        else
+        //Debug.Log(randomizeinterval);
+        Debug.Log(waypoints.transform.GetChild(waypointchild).gameObject.name+ "  "+ randomizeinterval +"  "+ waypointchild);
+        agent.SetDestination(waypoints.transform.GetChild(waypointchild).transform.position);
+    }
+
+    void EnemyArrayInitializer()
+    {
+        enemylist.Clear();
+        enemylist.Add(GameManager.enemyType0[0]);
+
+
+        if (EnemygoodBacteria)
         {
-            //make your AI do something when its not within the boundaries
-            //maybe generate a new direction?
+            BulletObjects.Add("");
+            foreach (GameObject go in GameManager.listOfenemies[1])
+            {
+                    enemylist.Add(go);
+            }
+        }
+
+        if (EnemybadBacteria)
+        {
+            foreach (GameObject go in GameManager.listOfenemies[2])
+            {
+                    enemylist.Add(go);
+            }
+        }
+
+        if (EnemyVirus)
+        {
+            foreach (GameObject go in GameManager.listOfenemies[3])
+            {
+                enemylist.Add(go);
+            }
+        }
+
+        if (Enemyrbc)
+        {
+            foreach (GameObject go in GameManager.listOfenemies[4])
+            {
+                enemylist.Add(go);
+            }
+        }
+
+        if (Enemywbc)
+        {
+            foreach (GameObject go in GameManager.listOfenemies[5])
+            {
+                enemylist.Add(go);
+            }
+        }
+
+        if (EnemyNanobot)
+        {
+            foreach (GameObject go in GameManager.listOfenemies[6])
+            {
+                enemylist.Add(go);
+            }
         }
     }
 
-
     void InteraxtWithNPC()
     {
-        
-        if (EnemygoodBacteria)
-        { 
-            //{ genericObjects = GameManager.enemyType1;
-            genericObjects.Concat(GameManager.enemyType1).ToArray();
-        }
 
-            else if (EnemybadBacteria)
-            {
-            //genericObjects =  GameManager.enemyType2;
-            genericObjects.Concat(GameManager.enemyType2).ToArray();
-        }
+        closest = FindClosestNPC(enemylist);
 
-            else if (EnemyVirus)
-            { //genericObjects = GameManager.enemyType3; 
-            genericObjects.Concat(GameManager.enemyType3).ToArray();
-        }
+        Debug.Log(closest.gameObject.name);
 
-            else if (Enemyrbc)
-            { //genericObjects = GameManager.enemyType4; 
-            genericObjects.Concat(GameManager.enemyType4).ToArray();
-        }
-
-            else if (Enemywbc)
-            { //genericObjects = GameManager.enemyType5; 
-            genericObjects.Concat(GameManager.enemyType5).ToArray();
-        }
-
-            else if (EnemyNanobot)
-            { //genericObjects = GameManager.enemyType6;
-            genericObjects.Concat(GameManager.enemyType6).ToArray();
-        }
-
-         closest= FindClosestNPC(genericObjects);
-
-        if (health[closest.gameObject.name]  > TresholdHealth)
+        if (health[closest.gameObject.name] > TresholdHealth)
         {
             if (health[this.gameObject.name] > TresholdHealth)
             {
@@ -159,7 +182,7 @@ public class AIEngine : MonoBehaviour {
             }
         }
 
-       else if (health[closest.gameObject.name] < TresholdHealth)
+        else if (health[closest.gameObject.name] < TresholdHealth)
         {
             if (health[this.gameObject.name] > health[closest.gameObject.name])
             {
@@ -180,39 +203,42 @@ public class AIEngine : MonoBehaviour {
         if (currentState == 1)
         {
             Chase(closest);
+            isInteracting = true;
         }
         else if (currentState == 2)
         {
             Run(closest);
+            isInteracting = false;
         }
 
         else if (currentState == 0)
         {
             RandomMovements();
+            isInteracting = false;
         }
-        
+
     }
 
-    GameObject FindClosestNPC(GameObject[] enemyList)
+    GameObject FindClosestNPC(List<GameObject> enemyList)
     {
         GameObject _closest = null;
         float distance = Mathf.Infinity;
         Vector3 position = this.transform.position;
-        foreach (GameObject go in genericObjects)
+        foreach (GameObject go in enemyList)
         {
-                float diff = Vector3.Distance(go.transform.position, this.transform.position);
-                float curDistance = diff;
-                if (curDistance < distance && curDistance != 0 && NotInSameGameObject(go, this.gameObject))
-                {
+            float diff = Vector3.Distance(go.transform.position, this.transform.position);
+            float curDistance = diff;
+            if (curDistance < distance && curDistance != 0 && NotInSameGameObject(go, this.gameObject))
+            {
                 _closest = go;
-                    distance = curDistance;
-                }
+                distance = curDistance;
+            }
 
         }
         return _closest;
     }
 
-     bool NotInSameGameObject(GameObject currentObj, GameObject referenceObj)
+    bool NotInSameGameObject(GameObject currentObj, GameObject referenceObj)
     {
         if (currentObj.transform.root.gameObject != referenceObj.transform.root.gameObject)
         {
@@ -230,14 +256,15 @@ public class AIEngine : MonoBehaviour {
 
         if (distance > 8)
         {
-            transform.position = Vector3.MoveTowards(transform.position, closest.transform.position, step);
+            //transform.position = Vector3.MoveTowards(transform.position, closest.transform.position, step);
+            agent.SetDestination(closest.transform.position);
         }
     }
 
     void Run(GameObject closest)
     {
 
-        float step = -movespeed * Time.deltaTime; 
+        float step = -movespeed * Time.deltaTime;
         float distance = Vector3.Distance(closest.transform.position, transform.position);
 
         if (distance < 15)
@@ -247,18 +274,51 @@ public class AIEngine : MonoBehaviour {
     }
 
 
-    void OnCollisionEnter(Collision collision)
+    void OnTriggerEnter(Collider other)
     {
-        Debug.Log("colloid");
+        // Debug.Log("colloid");
 
-        if (collision.transform.gameObject.name == "Bullet")
+        if (other.transform.gameObject.name == "Bullet")
         {
-            ContactPoint contact = collision.contacts[0];
-            Quaternion rot = Quaternion.FromToRotation(Vector3.up, contact.normal);
-            Vector3 pos = contact.point;
-            //Instantiate(explosionPrefab, pos, rot);
-            Destroy(collision.transform.gameObject);
+            GameManager.Health[this.gameObject.name] = GameManager.Health[this.gameObject.name]- healthreducestep;
         }
+
+        if (GameManager.ZoneTracker[this.gameObject.name] != null)
+        {
+            if (other.transform.gameObject.name == "zone1"
+            && GameManager.ZoneTracker[this.gameObject.name] != "zone1")
+            {
+                GameManager.ZoneTracker[this.gameObject.name].Replace(gameObject.name, other.name);
+            }
+
+            if (other.transform.gameObject.name == "zone2"
+                && GameManager.ZoneTracker[this.gameObject.name] != "zone2")
+            {
+                GameManager.ZoneTracker[this.gameObject.name].Replace(gameObject.name, other.name);
+            }
+            if (other.transform.gameObject.name == "zone3"
+                && GameManager.ZoneTracker[this.gameObject.name] != "zone3")
+            {
+                GameManager.ZoneTracker[this.gameObject.name].Replace(gameObject.name, other.name);
+            }
+
+            if (other.transform.gameObject.name == "zone4"
+                && GameManager.ZoneTracker[this.gameObject.name] != "zone4")
+            {
+                GameManager.ZoneTracker[this.gameObject.name].Replace(gameObject.name, other.name);
+            }
+        }
+
+        else
+        {
+            GameManager.ZoneTracker.Add(gameObject.name, other.name);
+        }
+
+        if (GameManager.Health[this.gameObject.name] < 0)
+        {
+            Destroy(gameObject);
+        }
+
     }
 
 
