@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
     public GameObject rbc;
     public GameObject wbc;
 
+    public int nthGeneration=0;
+
 
     public static List<GameObject> EnemyType = new List<GameObject>();
 
@@ -41,6 +43,8 @@ public class GameManager : MonoBehaviour
 
     public static Dictionary<string, int> Health = new Dictionary<string, int>();
     public static Dictionary<string, int> ZoneTracker = new Dictionary<string, int>();
+    public static Dictionary<string, BayesData> bayesTracker = new Dictionary<string, BayesData>();
+    public static Dictionary<string, float> survivaltimetracker = new Dictionary<string, float>();
 
     List<GameObject> spawnNPC = new List<GameObject>();
 
@@ -80,6 +84,7 @@ public class GameManager : MonoBehaviour
 
         if (respawntimer < 0)
         {
+            nthGeneration++;
             spawntimer = temp1;
             respawntimer = temp2;
         }
@@ -110,6 +115,19 @@ public class GameManager : MonoBehaviour
             listOfenemies[enemytype].Add(CreateEnemy(EnemyType[enemytype]));
         spawnedenemies++;
 
+    }
+
+    void FindMostEfficientAncestor(int enemytype)
+    {
+        string fittesancestor;
+        float survivaltime=0;
+        foreach (KeyValuePair<string, float> item in survivaltimetracker)
+        {
+            if (item.Key.StartsWith(EnemyType[enemytype].name) && item.Value> survivaltime)
+                {
+                fittesancestor = item.Key.ToString();
+            }
+        }
     }
 
     GameObject CreateEnemy(GameObject enemyName)

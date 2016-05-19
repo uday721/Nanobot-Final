@@ -50,7 +50,9 @@ public class AIEngine : MonoBehaviour
     public float healthcheckinterval = 3;
 
     int zone = 0;
-
+    public  List<BayesData> datatracker = new List<BayesData>();
+    private BayesData tempData;
+    private BayesData finalData;
 
 
     void Start()
@@ -58,8 +60,34 @@ public class AIEngine : MonoBehaviour
         StartCoroutine(CheckForCollision());
 
         updategameobjTimer = 20;
+        FindMostEfficientAncestor();
         EnemyArrayInitializer();
         agent = GetComponent<NavMeshAgent>();
+
+
+    }
+
+    void FindMostEfficientAncestor()
+    {
+        string fittesancestor;
+        float survivaltime = 0;
+
+        BayesData tempancestordata=null;
+
+        tempancestordata.name = gameObject.name;
+        tempancestordata.zone = zone;
+        tempancestordata.enemyhealth = 100;
+        tempancestordata.healthdifference = 0;
+
+        foreach (KeyValuePair<string, float> item in GameManager.survivaltimetracker)
+        {
+            if (item.Key.StartsWith(gameObject.name) && item.Value > survivaltime)
+            {
+                fittesancestor = item.Key.ToString();
+                tempancestordata = GameManager.bayesTracker[fittesancestor];
+            }
+        }
+        datatracker.Add(tempancestordata);
 
     }
 
@@ -74,9 +102,17 @@ public class AIEngine : MonoBehaviour
     {
         if (GameManager.Health[this.gameObject.name] < 0)
         {
-            Destroy(gameObject);
             GameManager.Health.Remove(this.gameObject.name);
+            Destroy(gameObject);
+            GameManager.bayesTracker.Add(this.gameObject.name, tempData);
+                 
         }
+
+        if (!GameManager.survivaltimetracker.ContainsKey(this.gameObject.name))
+        {
+            GameManager.survivaltimetracker.Add(this.gameObject.name, Time.time);
+        }
+
 
         updategameobjTimer -= Time.deltaTime;
         if (updategameobjTimer < 0)
@@ -227,6 +263,39 @@ public class AIEngine : MonoBehaviour
             }
 
             //Chase(closest);
+            int safestzone = 0;
+            if (datatracker.Count > 6)
+            {
+                int zone1count = 0;
+                int zone2count = 0;
+                int zone3count = 0;
+                int zone4count = 0;
+
+                foreach (BayesData bd in datatracker)
+                {
+                    if (bd.zone == 1)
+                    {
+                        zone1count++;
+                    }
+                    if (bd.zone == 1)
+                    {
+                        zone2count++;
+                    }
+                    if (bd.zone == 1)
+                    {
+                        zone3count++;
+                    }
+                    if (bd.zone == 1)
+                    {
+                        zone4count++;
+                    }
+                }
+
+                safestzone = System.Math.Max(System.Math.Max(System.Math.Max(zone2count,zone3count),zone4count), zone1count);
+            }
+
+            if (safestzone != GameManager.ZoneTracker[closest.gameObject.name])
+            { currentState = 0; }
             ActionBasedonState();
         }
 
@@ -238,6 +307,14 @@ public class AIEngine : MonoBehaviour
         if (currentState == 1)
         {
             Chase(closest);
+
+            tempData.name = gameObject.name;
+            tempData.zone = zone;
+            tempData.enemyhealth = health[closest.gameObject.name];
+            tempData.healthdifference = health[closest.gameObject.name]- health[closest.gameObject.name];
+
+            datatracker.Add(tempData);
+
             isInteracting = true;
         }
         else if (currentState == 2)
