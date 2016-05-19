@@ -1,0 +1,38 @@
+Initialize engine version: 5.3.0f4 (2524e04062b4)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: Intel(R) HD Graphics 5600 (ID=0x1612)
+    Vendor:   Intel
+    VRAM:     128 MB
+Begin MonoManager ReloadAssembly
+Platform assembly: D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\Assembly-CSharp-firstpass.dll (this message is harmless)
+Loading D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\Assembly-CSharp-firstpass.dll into Unity Child Domain
+Platform assembly: D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+- Completed reload, in  0.044 seconds
+Platform assembly: D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: D:\Academics\2ndsem\AI\git project\final\build1_Data\Managed\System.dll (this message is harmless)
+desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 0.598715 ms
+ArgumentException: The thing you want to instantiate is null.
+  at UnityEngine.Object.CheckNullArgument (System.Object arg, System.String message) [0x00000] in <filename unknown>:0 
+  at UnityEngine.Object.Instantiate (UnityEngine.Object original, Vector3 position, Quaternion rotation) [0x00000] in <filename unknown>:0 
+  at GameManager.CreateEnemy (System.String enemyName) [0x00000] in <filename unknown>:0 
+  at GameManager.CreateEnemies () [0x00000] in <filename unknown>:0 
+  at GameManager.Start () [0x00000] in <filename unknown>:0 
+ 
+(Filename:  Line: -1)
+
+Setting up 2 worker threads for Enlighten.
+  Thread -> id: 10cc -> priority: 1 
+  Thread -> id: 3ef8 -> priority: 1 

@@ -68,5 +68,8 @@ public class Shooting : MonoBehaviour {
     void Effect()
     {
         Instantiate(bulletTrailPrefab, firePoint.position, firePoint.rotation);
+        Instantiate(bulletTrailPrefab, firePoint.position, firePoint.rotation);
+        Instantiate(bulletTrailPrefab, firePoint.position, firePoint.rotation);
+        Instantiate(bulletTrailPrefab, firePoint.position, firePoint.rotation);
     }
 }

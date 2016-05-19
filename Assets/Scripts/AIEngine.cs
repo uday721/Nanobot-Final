@@ -14,6 +14,7 @@ public class AIEngine : MonoBehaviour
     public bool Enemywbc;
     public bool EnemyNanobot;
 
+
     private GameObject closest;
     private float distance;
 
@@ -38,7 +39,7 @@ public class AIEngine : MonoBehaviour
     private static int[] stateMachine = { 0, 1, 2 };
     private int currentState = stateMachine[0];
     Dictionary<string, int> health = GameManager.Health;
-    public static Dictionary<string, string> ZoneTracker = GameManager.ZoneTracker;
+    public static Dictionary<string, int> ZoneTracker = GameManager.ZoneTracker;
 
     bool isInteracting = false;
     int waypointchild = 0;
@@ -48,38 +49,56 @@ public class AIEngine : MonoBehaviour
     //to learn if it is a safe area
     public float healthcheckinterval = 3;
 
+    int zone = 0;
+
 
 
     void Start()
     {
+        StartCoroutine(CheckForCollision());
+
         updategameobjTimer = 20;
-        //EnemyArrayInitializer();
+        EnemyArrayInitializer();
         agent = GetComponent<NavMeshAgent>();
 
     }
 
-
+    IEnumerator CheckForCollision()
+    {
+        yield return null;
+        //Debug.Log(zone);
+    }
 
     // Update is called once per frame
     void Update()
     {
+        if (GameManager.Health[this.gameObject.name] < 0)
+        {
+            Destroy(gameObject);
+            GameManager.Health.Remove(this.gameObject.name);
+        }
+
         updategameobjTimer -= Time.deltaTime;
         if (updategameobjTimer < 0)
         {
             EnemyArrayInitializer();
             isInteracting = false;
-            updategameobjTimer = 20;
+            updategameobjTimer = 10;
         }
 
-        if (updategameobjTimer > 10 && !isInteracting)
+        if (!isInteracting)
         {
             RandomMovements();
         }
 
-        if (updategameobjTimer < 10 && !isInteracting)
+        //Debug.Log(updategameobjTimer);
+
+        if (updategameobjTimer < 5 && !isInteracting && enemylist.Count != 0)
         {
+            //Debug.Log("yes");
             InteraxtWithNPC();
         }
+
 
 
 
@@ -103,19 +122,19 @@ public class AIEngine : MonoBehaviour
             randomizeinterval = 3.0f;
         }
         //Debug.Log(randomizeinterval);
-        Debug.Log(waypoints.transform.GetChild(waypointchild).gameObject.name+ "  "+ randomizeinterval +"  "+ waypointchild);
+        //Debug.Log(waypoints.transform.GetChild(waypointchild).gameObject.name+ "  "+ randomizeinterval +"  "+ waypointchild);
         agent.SetDestination(waypoints.transform.GetChild(waypointchild).transform.position);
     }
 
     void EnemyArrayInitializer()
     {
         enemylist.Clear();
-        enemylist.Add(GameManager.enemyType0[0]);
+       // enemylist.Add(GameManager.enemyType0[0]);
 
 
         if (EnemygoodBacteria)
         {
-            BulletObjects.Add("");
+            //BulletObjects.Add("");
             foreach (GameObject go in GameManager.listOfenemies[1])
             {
                     enemylist.Add(go);
@@ -136,6 +155,7 @@ public class AIEngine : MonoBehaviour
             {
                 enemylist.Add(go);
             }
+           // enemylist.Add(GameObject.FindGameObjectWithTag("nanobot"));
         }
 
         if (Enemyrbc)
@@ -156,46 +176,61 @@ public class AIEngine : MonoBehaviour
 
         if (EnemyNanobot)
         {
-            foreach (GameObject go in GameManager.listOfenemies[6])
-            {
-                enemylist.Add(go);
-            }
+                enemylist.Add(GameObject.Find("nanobot"));
+            
         }
+
+        if (enemylist.Count == 0)
+        {
+            isInteracting = false;
+        }
+
     }
 
     void InteraxtWithNPC()
     {
+        
 
         closest = FindClosestNPC(enemylist);
 
-        Debug.Log(closest.gameObject.name);
-
-        if (health[closest.gameObject.name] > TresholdHealth)
+        if (closest == null)
         {
-            if (health[this.gameObject.name] > TresholdHealth)
-            {
-                currentState = stateMachine[1];
-            }
-            else if (health[this.gameObject.name] < TresholdHealth)
-            {
-                currentState = stateMachine[2];
-            }
+           // Debug.Log(gameObject.name);
         }
 
-        else if (health[closest.gameObject.name] < TresholdHealth)
+        if (closest != null)
         {
-            if (health[this.gameObject.name] > health[closest.gameObject.name])
+           // Debug.Log(closest.gameObject.name);
+
+            if (health[closest.gameObject.name] > TresholdHealth)
             {
-                currentState = stateMachine[1];
+                if (health[this.gameObject.name] > TresholdHealth)
+                {
+                    currentState = stateMachine[1];
+                }
+                else if (health[this.gameObject.name] < TresholdHealth)
+                {
+                    currentState = stateMachine[2];
+                }
             }
-            else if (health[this.gameObject.name] < health[closest.gameObject.name])
+
+            else if (health[closest.gameObject.name] < TresholdHealth)
             {
-                currentState = stateMachine[2];
+                if (health[this.gameObject.name] > health[closest.gameObject.name])
+                {
+                    currentState = stateMachine[1];
+                }
+                else if (health[this.gameObject.name] < health[closest.gameObject.name])
+                {
+                    currentState = stateMachine[2];
+                }
             }
+
+            //Chase(closest);
+            ActionBasedonState();
         }
 
-        //Chase(closest);
-        ActionBasedonState();
+        else { isInteracting = false; }
     }
 
     void ActionBasedonState()
@@ -226,12 +261,15 @@ public class AIEngine : MonoBehaviour
         Vector3 position = this.transform.position;
         foreach (GameObject go in enemyList)
         {
-            float diff = Vector3.Distance(go.transform.position, this.transform.position);
-            float curDistance = diff;
-            if (curDistance < distance && curDistance != 0 && NotInSameGameObject(go, this.gameObject))
+            if (go)
             {
-                _closest = go;
-                distance = curDistance;
+                float diff = Vector3.Distance(go.transform.position, this.transform.position);
+                float curDistance = diff;
+                if (curDistance < distance && curDistance != 0 && NotInSameGameObject(go, this.gameObject))
+                {
+                    _closest = go;
+                    distance = curDistance;
+                }
             }
 
         }
@@ -274,50 +312,67 @@ public class AIEngine : MonoBehaviour
     }
 
 
+    void UpdateZone()
+    {
+        if (gameObject.transform.position.x > -61.0f && gameObject.transform.position.x <0.0f && gameObject.transform.position.z >-61.0f && gameObject.transform.position.z <0.0f)
+            zone = 1;
+            if (gameObject.transform.position.x >0.0f && gameObject.transform.position.x <61.0f && gameObject.transform.position.z >-61.0f && gameObject.transform.position.z <0.0f)
+            zone = 2;
+        if (gameObject.transform.position.x >-61.0f && gameObject.transform.position.x <0.0f && gameObject.transform.position.z >0.0f && gameObject.transform.position.z <61.0f)
+            zone = 3;
+        if (gameObject.transform.position.x >0.0f && gameObject.transform.position.x <61.0f && gameObject.transform.position.z >0.0f && gameObject.transform.position.z <61.0f)
+            zone = 4;
+
+        if (zone!= GameManager.ZoneTracker[this.gameObject.name])
+            {
+            GameManager.ZoneTracker[this.gameObject.name] = zone;
+            }
+            
+    }
+
     void OnTriggerEnter(Collider other)
     {
-        // Debug.Log("colloid");
-
-        if (other.transform.gameObject.name == "Bullet")
+        if (
+            (gameObject.name.Substring(0, 2) == "wbc" && other.gameObject.name.Substring(0, 2) == "VBu") ||
+            (gameObject.name.Substring(0, 2) == "rbc" && other.gameObject.name.Substring(0, 2) == "VBu") ||
+            (gameObject.name.Substring(0, 2) == "rbc" && other.gameObject.name.Substring(0, 2) == "NBB") ||
+            (gameObject.name.Substring(0, 2) == "vir" && other.gameObject.name.Substring(0, 2) == "RBu") ||
+            (gameObject.name.Substring(0, 2) == "vir" && other.gameObject.name.Substring(0, 2) == "NBB") ||
+            (gameObject.name.Substring(0, 2) == "gud" && other.gameObject.name.Substring(0, 2) == "BBB") ||
+            (gameObject.name.Substring(0, 2) == "bad" && other.gameObject.name.Substring(0, 2) == "NBB")||
+            (gameObject.name.Substring(0, 2) == "bad" && other.gameObject.name.Substring(0, 2) == "WBC")
+            )
         {
-            GameManager.Health[this.gameObject.name] = GameManager.Health[this.gameObject.name]- healthreducestep;
+            //Debug.Log("yes");
+            GameManager.Health[this.gameObject.name] = GameManager.Health[this.gameObject.name] - 10;
         }
 
-        if (GameManager.ZoneTracker[this.gameObject.name] != null)
+
+    }
+
+    void OnCollisionEnter(Collision other)
+    {
+        if (gameObject.name.Length < 3 || other.gameObject.name.Length < 3)
         {
-            if (other.transform.gameObject.name == "zone1"
-            && GameManager.ZoneTracker[this.gameObject.name] != "zone1")
-            {
-                GameManager.ZoneTracker[this.gameObject.name].Replace(gameObject.name, other.name);
-            }
-
-            if (other.transform.gameObject.name == "zone2"
-                && GameManager.ZoneTracker[this.gameObject.name] != "zone2")
-            {
-                GameManager.ZoneTracker[this.gameObject.name].Replace(gameObject.name, other.name);
-            }
-            if (other.transform.gameObject.name == "zone3"
-                && GameManager.ZoneTracker[this.gameObject.name] != "zone3")
-            {
-                GameManager.ZoneTracker[this.gameObject.name].Replace(gameObject.name, other.name);
-            }
-
-            if (other.transform.gameObject.name == "zone4"
-                && GameManager.ZoneTracker[this.gameObject.name] != "zone4")
-            {
-                GameManager.ZoneTracker[this.gameObject.name].Replace(gameObject.name, other.name);
-            }
+            Debug.Log(other.gameObject.name);
+        }
+        else if (
+            (gameObject.name.Substring(0, 3) == "wbc" && other.gameObject.name.Substring(0, 3) == "VBu") ||
+            (gameObject.name.Substring(0, 3) == "rbc" && other.gameObject.name.Substring(0, 3) == "VBu") ||
+            (gameObject.name.Substring(0, 3) == "rbc" && other.gameObject.name.Substring(0, 3) == "NBB") ||
+            (gameObject.name.Substring(0, 3) == "vir" && other.gameObject.name.Substring(0, 3) == "RBu") ||
+            (gameObject.name.Substring(0, 3) == "vir" && other.gameObject.name.Substring(0, 3) == "NBB") ||
+            (gameObject.name.Substring(0, 3) == "gud" && other.gameObject.name.Substring(0, 3) == "BBB") ||
+            (gameObject.name.Substring(0, 3) == "bad" && other.gameObject.name.Substring(0, 3) == "NBB") ||
+            (gameObject.name.Substring(0, 3) == "bad" && other.gameObject.name.Substring(0, 3) == "WBC")
+            )
+        {
+            Debug.Log(other.gameObject.name);
+            GameManager.Health[this.gameObject.name] = GameManager.Health[this.gameObject.name] - 25;
         }
 
-        else
-        {
-            GameManager.ZoneTracker.Add(gameObject.name, other.name);
-        }
 
-        if (GameManager.Health[this.gameObject.name] < 0)
-        {
-            Destroy(gameObject);
-        }
+        
 
     }
 
